@@ -5,34 +5,57 @@
  * No errors, no headaches! Run everything!
  */
 ;(function (global) {
-  var proxy = global.eval, target;
+  var proxy = global.eval;
 
-  global.onerror = function (msg, url, lineNr) {
-    var lines;
-    if (!target || !target.length) {
-      return;
+  global._evalCounters = {};
+
+  function addCounters(target, counterName) {
+    return target.replace(/;/g, "\n_evalCounters['" + counterName + "']+=1\n");
+  }
+
+  function clearEmpty(target) {
+     var cleared = target.split(';'),
+        i, row;
+
+    for (i = cleared.length - 1; i >= 0 ; i -= 1) {
+      row = cleared[i];
+
+      if (typeof row === "undefined" || !row.length) {
+        cleared.splice(i, 1);
+      }
     }
 
-    lines = target.split('\n');
-    lines.splice(0, lineNr);
-
-    // Next loop cycle
-    setTimeout(function() {
-      eval(lines.join(''));
-    }, 0);
-
-    // Dont allow the REAL handler to run.
-    // We dont need them error messages.
-    // Messages are for the weak!
-    return true;
-  };
+    return cleared.join(';');
+  }
 
   /**
    * Override the eval. Because fuck you, thats why!
    */
   global.eval = function (rawTarget) {
-    target = rawTarget.replace(/;/g, ";\n");
-    proxy.call(this, target);
+    var counterName = Math.random().toString(36).substring(7),
+        result, lineNr, lines;
+
+    // Remove empty lines
+    rawTarget = clearEmpty(rawTarget);
+
+    // Wait until we have a result
+    while (true) {
+
+      global._evalCounters[counterName] = 0;
+      target = addCounters(rawTarget, counterName);
+      try {
+        result = proxy.call(this, target);
+        // Cleanup
+        global._evalCounters[counterName] = undefined;
+        // Sooooo nothing bad happend? Lets return
+        return result;
+      } catch (error) {
+        lineNr = _evalCounters[counterName];
+        lines  = rawTarget.split(';');
+        lines.splice(lineNr, 1);
+        rawTarget = lines.join(';');
+      }
+    }
+    // Fuck it, lets wait
   };
 })(this);
-

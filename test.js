@@ -1,1 +1,1 @@
-eval('1;fuck;console.log("see, im working!");asdasd;console.log("aint that hard")');
+eval('asd;;;;1+2;asd;(function() { alert(0); fuck })();');
