@@ -1,1 +1,16 @@
-eval('asd;;;;1+2;asd;(function() { alert(0); fuck })();');
+var data = [
+  "1+2",
+  "broken-strings-suck",
+  "[]",
+  "so-do-broken-bones",
+  "but-thankfully",
+  "we-still-have-functions",
+  "(function() {",
+    "console.log('that run')",
+    "sometimes-tho",
+  "})();",
+  "alert('bingo was his name Oooh')"
+];
+
+
+eval(data.join('\r\n'));

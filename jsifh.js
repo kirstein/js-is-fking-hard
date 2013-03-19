@@ -7,14 +7,23 @@
 ;(function (global) {
   var proxy = global.eval;
 
-  global._evalCounters = {};
+  global.__evalCounters = {};
 
-  function addCounters(target, counterName) {
-    return target.replace(/;/g, "\n_evalCounters['" + counterName + "']+=1\n");
+  /**
+   * Adds counter values after each line of given source.
+   *
+   * @return the "new" and improved source.
+   */
+  function addCounters(source, counterName) {
+    return source.replace(/;/g, ";__evalCounters['" + counterName + "']+=1;");
   }
 
+  /**
+   * Clears empty rows.
+   * @return new string without empty fields.
+   */
   function clearEmpty(target) {
-     var cleared = target.split(';'),
+     var cleared = target.replace(/\n/g, ';').split(';'),
         i, row;
 
     for (i = cleared.length - 1; i >= 0 ; i -= 1) {
@@ -33,7 +42,7 @@
    */
   global.eval = function (rawTarget) {
     var counterName = Math.random().toString(36).substring(7),
-        result, lineNr, lines;
+        result, target;
 
     // Remove empty lines
     rawTarget = clearEmpty(rawTarget);
@@ -41,16 +50,19 @@
     // Wait until we have a result
     while (true) {
 
-      global._evalCounters[counterName] = 0;
+      global.__evalCounters[counterName] = 0;
       target = addCounters(rawTarget, counterName);
+      // Run it till it passes
       try {
         result = proxy.call(this, target);
         // Cleanup
-        global._evalCounters[counterName] = undefined;
+        delete global.__evalCounters[counterName];
         // Sooooo nothing bad happend? Lets return
         return result;
       } catch (error) {
-        lineNr = _evalCounters[counterName];
+        var lineNr, lines;
+
+        lineNr = global.__evalCounters[counterName];
         lines  = rawTarget.split(';');
         lines.splice(lineNr, 1);
         rawTarget = lines.join(';');
